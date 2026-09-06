@@ -1,0 +1,61 @@
+{{- $service := .Values.service }}
+{{- $serviceName := default .Values.metadata.name (get $service "name") }}
+{{- $requestedPort := default "" .Values.ingress.port }}
+{{- $portName := "" }}
+{{- $expose := 0 }}
+{{- if hasKey $service "port" }}
+  {{- $portName = $service.port }}
+  {{- $expose = int $service.expose }}
+  {{- if and $requestedPort (ne $requestedPort $portName) }}
+    {{- fail (printf "ingress.port %s does not exist on service %s" $requestedPort $serviceName) }}
+  {{- end }}
+{{- else if kindIs "map" $service.ports }}
+  {{- if $requestedPort }}
+    {{- if not (hasKey $service.ports $requestedPort) }}
+      {{- fail (printf "ingress.port %s does not exist on service %s" $requestedPort $serviceName) }}
+    {{- end }}
+    {{- $portName = $requestedPort }}
+    {{- $expose = int (index $service.ports $requestedPort) }}
+  {{- else if eq (len $service.ports) 1 }}
+    {{- range $name, $number := $service.ports }}
+      {{- $portName = $name }}
+      {{- $expose = int $number }}
+    {{- end }}
+  {{- else }}
+    {{- fail (printf "ingress.port is required because service %s has multiple ports" $serviceName) }}
+  {{- end }}
+{{- else }}
+  {{- if and (not $requestedPort) (gt (len $service.ports) 1) }}
+    {{- fail (printf "ingress.port is required because service %s has multiple ports" $serviceName) }}
+  {{- end }}
+  {{- range $servicePort := $service.ports }}
+    {{- if or (eq $servicePort.port $requestedPort) (and (not $requestedPort) (eq (len $service.ports) 1)) }}
+      {{- $portName = $servicePort.port }}
+      {{- $expose = int $servicePort.expose }}
+    {{- end }}
+  {{- end }}
+  {{- if not $portName }}
+    {{- fail (printf "ingress.port %s does not exist on service %s" $requestedPort $serviceName) }}
+  {{- end }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "homelab-app.name" . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.syncWave | quote }}
+  labels:
+    {{- include "homelab-app.labels" . | nindent 4 }}
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $expose }}

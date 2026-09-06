@@ -1,0 +1,73 @@
+{{- $service := .Values.service }}
+{{- $serviceName := default .Values.metadata.name (get $service "name") }}
+{{- $regularContainers := list }}
+{{- range $containerName, $container := .Values.containers }}
+  {{- if not (default false $container.init) }}
+    {{- $regularContainers = append $regularContainers $containerName }}
+  {{- end }}
+{{- end }}
+{{- $defaultContainer := "" }}
+{{- if eq (len $regularContainers) 1 }}
+  {{- $defaultContainer = first $regularContainers }}
+{{- end }}
+{{- $servicePorts := list }}
+{{- if hasKey $service "port" }}
+  {{- $containerName := default $defaultContainer (get $service "container") }}
+  {{- if not $containerName }}
+    {{- fail "service.container is required when the app has multiple regular containers" }}
+  {{- end }}
+  {{- $servicePorts = append $servicePorts (dict "container" $containerName "port" $service.port "expose" $service.expose) }}
+{{- else if kindIs "map" $service.ports }}
+  {{- $containerName := default $defaultContainer (get $service "container") }}
+  {{- if not $containerName }}
+    {{- fail "service.container is required when the app has multiple regular containers" }}
+  {{- end }}
+  {{- range $portName, $expose := $service.ports }}
+    {{- $servicePorts = append $servicePorts (dict "container" $containerName "port" $portName "expose" $expose) }}
+  {{- end }}
+{{- else }}
+  {{- range $servicePort := $service.ports }}
+    {{- $containerName := default $defaultContainer (get $servicePort "container") }}
+    {{- if not $containerName }}
+      {{- fail (printf "service.ports entry for port %s requires container because the app has multiple regular containers" $servicePort.port) }}
+    {{- end }}
+    {{- $servicePorts = append $servicePorts (dict "container" $containerName "port" $servicePort.port "expose" $servicePort.expose) }}
+  {{- end }}
+{{- end }}
+{{- $seenPorts := dict }}
+{{- range $servicePort := $servicePorts }}
+  {{- if hasKey $seenPorts $servicePort.port }}
+    {{- fail (printf "service contains duplicate port name %s" $servicePort.port) }}
+  {{- end }}
+  {{- $_ := set $seenPorts $servicePort.port true }}
+  {{- if not (hasKey $.Values.containers $servicePort.container) }}
+    {{- fail (printf "service references unknown container %s" $servicePort.container) }}
+  {{- end }}
+  {{- $container := index $.Values.containers $servicePort.container }}
+  {{- if default false $container.init }}
+    {{- fail (printf "service cannot reference init container %s" $servicePort.container) }}
+  {{- end }}
+  {{- $containerPorts := default (dict) $container.ports }}
+  {{- if not (hasKey $containerPorts $servicePort.port) }}
+    {{- fail (printf "service references unknown port %s on container %s" $servicePort.port $servicePort.container) }}
+  {{- end }}
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.syncWave | quote }}
+  labels:
+    {{- include "homelab-app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "homelab-app.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- range $servicePort := $servicePorts }}
+    - name: {{ $servicePort.port }}
+      port: {{ $servicePort.expose }}
+      targetPort: {{ $servicePort.port }}
+      protocol: TCP
+    {{- end }}

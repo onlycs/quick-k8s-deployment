@@ -1,0 +1,21 @@
+{{- range $name, $volume := .Values.persistence }}
+{{- if and (hasKey $volume "pvc") (not (empty (get $volume "path"))) (not (empty (get $volume "size"))) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $volume.pvc }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $.Values.syncWave | quote }}
+    nfs.io/storage-path: {{ $volume.path | quote }}
+  labels:
+    {{- include "homelab-app.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - {{ default "ReadWriteOnce" $volume.mode }}
+  storageClassName: tank
+  resources:
+    requests:
+      storage: {{ $volume.size }}
+{{- end }}
+{{- end }}

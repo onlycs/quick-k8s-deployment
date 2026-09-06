@@ -1,0 +1,25 @@
+metadata:
+  name: ""
+  namespace: ""
+
+# Named volumes available to containers through their mounts map.
+persistence: {}
+
+# Named regular and init containers.
+containers: {}
+
+service: {}
+
+ingress:
+  host: ""
+
+scaling:
+  replicas: 1
+  strategy: Recreate
+
+nodeSelector: {}
+tolerations: []
+runtimeClassName: ""
+
+# Argo CD applies sibling manifests before resources rendered from app.yaml.
+syncWave: 10

@@ -1,0 +1,93 @@
+{{- $regularContainers := 0 }}
+{{- $initContainers := 0 }}
+{{- range $container := .Values.containers }}
+  {{- if default false $container.init }}
+    {{- $initContainers = add1 $initContainers }}
+  {{- else }}
+    {{- $regularContainers = add1 $regularContainers }}
+  {{- end }}
+{{- end }}
+{{- if eq (int $regularContainers) 0 }}
+  {{- fail "at least one regular container is required" }}
+{{- end }}
+{{- $hasHostPath := false }}
+{{- range $volume := .Values.persistence }}
+  {{- if hasKey $volume "hostPath" }}
+    {{- $hasHostPath = true }}
+  {{- end }}
+{{- end }}
+{{- if and $hasHostPath (empty .Values.nodeSelector) }}
+  {{- fail "nodeSelector must be non-empty when persistence contains a hostPath volume" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "homelab-app.name" . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.syncWave | quote }}
+  labels:
+    {{- include "homelab-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.scaling.replicas }}
+  strategy:
+    type: {{ .Values.scaling.strategy }}
+  selector:
+    matchLabels:
+      {{- include "homelab-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "homelab-app.selectorLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      {{- with .Values.runtimeClassName }}
+      runtimeClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if gt (int $initContainers) 0 }}
+      initContainers:
+        {{- range $name, $container := .Values.containers }}
+        {{- if default false $container.init }}
+        {{- include "homelab-app.container" (dict "root" $ "name" $name "container" $container) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+      containers:
+        {{- range $name, $container := .Values.containers }}
+        {{- if not (default false $container.init) }}
+        {{- include "homelab-app.container" (dict "root" $ "name" $name "container" $container) | nindent 8 }}
+        {{- end }}
+        {{- end }}
+      {{- with .Values.persistence }}
+      volumes:
+        {{- range $name, $volume := . }}
+        - name: {{ $name }}
+          {{- if hasKey $volume "pvc" }}
+          persistentVolumeClaim:
+            claimName: {{ $volume.pvc }}
+          {{- else if hasKey $volume "hostPath" }}
+          hostPath:
+            path: {{ $volume.hostPath | quote }}
+            type: {{ default "DirectoryOrCreate" $volume.type }}
+          {{- else if hasKey $volume "configMap" }}
+          configMap:
+            name: {{ $volume.configMap }}
+            {{- if hasKey $volume "mode" }}
+            defaultMode: {{ $volume.mode }}
+            {{- end }}
+          {{- else if hasKey $volume "secret" }}
+          secret:
+            secretName: {{ $volume.secret }}
+            {{- if hasKey $volume "mode" }}
+            defaultMode: {{ $volume.mode }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
