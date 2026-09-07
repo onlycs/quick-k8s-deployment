@@ -4,7 +4,7 @@
   "description": "A reusable homelab Deployment, Service, Ingress, and persistence contract.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["metadata", "containers", "service", "ingress"],
+  "required": ["metadata", "containers", "service"],
   "allOf": [
     {
       "if": {
@@ -67,6 +67,7 @@
     "ingress": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Optional Ingress. Omit this object to expose the app only through its Service.",
       "required": ["host"],
       "properties": {
         "host": { "type": "string", "minLength": 1, "description": "Ingress hostname." },
@@ -304,6 +305,26 @@
           "properties": {
             "name": { "type": "string", "minLength": 1 },
             "value": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "secret"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "description": "Environment variable name." },
+            "secret": { "type": "string", "minLength": 1, "description": "Kubernetes Secret name." },
+            "key": { "type": "string", "minLength": 1, "description": "Key within the Secret. Defaults to name." }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "configMap"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "description": "Environment variable name." },
+            "configMap": { "type": "string", "minLength": 1, "description": "Kubernetes ConfigMap name." },
+            "key": { "type": "string", "minLength": 1, "description": "Key within the ConfigMap. Defaults to name." }
           }
         },
         {

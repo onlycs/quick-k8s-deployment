@@ -10,9 +10,6 @@ containers: {}
 
 service: {}
 
-ingress:
-  host: ""
-
 scaling:
   replicas: 1
   strategy: Recreate

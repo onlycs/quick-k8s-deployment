@@ -1,3 +1,4 @@
+{{- if .Values.ingress }}
 {{- $service := .Values.service }}
 {{- $serviceName := default .Values.metadata.name (get $service "name") }}
 {{- $requestedPort := default "" .Values.ingress.port }}
@@ -59,3 +60,4 @@ spec:
                 name: {{ $serviceName }}
                 port:
                   number: {{ $expose }}
+{{- end }}

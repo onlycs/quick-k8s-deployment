@@ -88,26 +88,38 @@ failureThreshold: {{ dig "failureThreshold" 5 $probe }}
     {{- range $container.env }}
     {{- if hasKey . "name" }}
     - name: {{ .name }}
+      {{- if hasKey . "value" }}
       value: {{ .value | quote }}
+      {{- else if hasKey . "secret" }}
+      valueFrom:
+        secretKeyRef:
+          name: {{ .secret }}
+          key: {{ default .name .key }}
+      {{- else if hasKey . "configMap" }}
+      valueFrom:
+        configMapKeyRef:
+          name: {{ .configMap }}
+          key: {{ default .name .key }}
+      {{- end }}
     {{- end }}
     {{- end }}
   {{- end }}
   {{- $hasEnvFrom := false }}
   {{- range $container.env }}
-    {{- if or (hasKey . "secret") (hasKey . "configMap") }}
+    {{- if and (not (hasKey . "name")) (or (hasKey . "secret") (hasKey . "configMap")) }}
       {{- $hasEnvFrom = true }}
     {{- end }}
   {{- end }}
   {{- if $hasEnvFrom }}
   envFrom:
     {{- range $container.env }}
-    {{- if hasKey . "secret" }}
+    {{- if and (not (hasKey . "name")) (hasKey . "secret") }}
     - secretRef:
         name: {{ .secret }}
       {{- with .prefix }}
       prefix: {{ . | quote }}
       {{- end }}
-    {{- else if hasKey . "configMap" }}
+    {{- else if and (not (hasKey . "name")) (hasKey . "configMap") }}
     - configMapRef:
         name: {{ .configMap }}
       {{- with .prefix }}
