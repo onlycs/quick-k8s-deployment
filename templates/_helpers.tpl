@@ -57,8 +57,8 @@ failureThreshold: {{ dig "failureThreshold" 5 $probe }}
 - name: {{ $name }}
   image: {{ $container.image | quote }}
   imagePullPolicy: IfNotPresent
-  {{- with $container.command }}
-  command:
+  {{- with $container.args }}
+  args:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- with $container.ports }}
