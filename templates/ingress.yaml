@@ -45,6 +45,9 @@ metadata:
   name: {{ include "homelab-app.name" . }}
   annotations:
     argocd.argoproj.io/sync-wave: {{ .Values.syncWave | quote }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   labels:
     {{- include "homelab-app.labels" . | nindent 4 }}
 spec:

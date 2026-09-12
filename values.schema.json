@@ -71,7 +71,8 @@
       "required": ["host"],
       "properties": {
         "host": { "type": "string", "minLength": 1, "description": "Ingress hostname." },
-        "port": { "$ref": "#/definitions/dnsLabel", "description": "Service port name used by this Ingress. Required when the selected Service has multiple ports." }
+        "port": { "$ref": "#/definitions/dnsLabel", "description": "Service port name used by this Ingress. Required when the selected Service has multiple ports." },
+        "annotations": { "$ref": "#/definitions/stringMap", "default": {}, "description": "Additional annotations applied to the Ingress." }
       }
     },
     "scaling": {
