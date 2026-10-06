@@ -96,6 +96,18 @@
       "items": { "$ref": "#/definitions/toleration" }
     },
     "runtimeClassName": { "type": "string", "default": "", "description": "Optional RuntimeClass, such as nvidia." },
+    "imagePullSecrets": {
+      "type": "array",
+      "default": [],
+      "uniqueItems": true,
+      "description": "Names of existing registry pull Secrets in the application's namespace. Used by regular and init containers.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 253,
+        "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+      }
+    },
     "syncWave": {
       "type": "integer",
       "minimum": -100,

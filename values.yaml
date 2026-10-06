@@ -18,5 +18,8 @@ nodeSelector: {}
 tolerations: []
 runtimeClassName: ""
 
+# Names of registry pull Secrets in this app's namespace.
+imagePullSecrets: []
+
 # Argo CD applies sibling manifests before resources rendered from app.yaml.
 syncWave: 10

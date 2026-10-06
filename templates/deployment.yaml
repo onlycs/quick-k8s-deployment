@@ -40,6 +40,12 @@ spec:
         {{- include "homelab-app.selectorLabels" . | nindent 8 }}
     spec:
       automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . | quote }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.runtimeClassName }}
       runtimeClassName: {{ . }}
       {{- end }}
