@@ -56,7 +56,7 @@ failureThreshold: {{ dig "failureThreshold" 5 $probe }}
 {{- $container := .container -}}
 - name: {{ $name }}
   image: {{ $container.image | quote }}
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: {{ default "IfNotPresent" $container.imagePullPolicy }}
   {{- with $container.args }}
   args:
     {{- toYaml . | nindent 4 }}

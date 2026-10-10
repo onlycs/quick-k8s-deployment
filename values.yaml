@@ -6,6 +6,7 @@ metadata:
 persistence: {}
 
 # Named regular and init containers.
+# Each container can set imagePullPolicy: Always, IfNotPresent (default), or Never.
 containers: {}
 
 service: {}
