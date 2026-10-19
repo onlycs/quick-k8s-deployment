@@ -57,7 +57,7 @@ kind: Service
 metadata:
   name: {{ $serviceName }}
   annotations:
-    argocd.argoproj.io/sync-wave: {{ .Values.syncWave | quote }}
+    argocd.argoproj.io/sync-wave: {{ .Values.syncWave + 1 | quote }}
   labels:
     {{- include "homelab-app.labels" . | nindent 4 }}
 spec:
