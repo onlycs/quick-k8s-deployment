@@ -6,7 +6,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ $volume.pvc }}
   annotations:
-    argocd.argoproj.io/sync-wave: {{ sub $.Values.syncWave 1 | quote }}
+    argocd.argoproj.io/sync-wave: 0
     nfs.io/storage-path: {{ $volume.path | quote }}
   labels:
     {{- include "homelab-app.labels" $ | nindent 4 }}

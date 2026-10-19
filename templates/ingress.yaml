@@ -44,7 +44,7 @@ kind: Ingress
 metadata:
   name: {{ include "homelab-app.name" . }}
   annotations:
-    argocd.argoproj.io/sync-wave: {{ add .Values.syncWave 2 | quote }}
+    argocd.argoproj.io/sync-wave: 30
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
