@@ -19,6 +19,17 @@
 {{- if and $hasHostPath (empty .Values.nodeSelector) }}
   {{- fail "nodeSelector must be non-empty when persistence contains a hostPath volume" }}
 {{- end }}
+{{- $hasHostPort := false }}
+{{- range $container := .Values.containers }}
+  {{- range $portSpec := (default (dict) $container.ports) }}
+    {{- if and (kindIs "map" $portSpec) (hasKey $portSpec "hostPort") }}
+      {{- $hasHostPort = true }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if and $hasHostPort (empty .Values.nodeSelector) }}
+  {{- fail "nodeSelector must be non-empty when a container port sets hostPort" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

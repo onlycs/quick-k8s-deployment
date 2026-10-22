@@ -51,6 +51,12 @@
   {{- if not (hasKey $containerPorts $servicePort.port) }}
     {{- fail (printf "service references unknown port %s on container %s" $servicePort.port $servicePort.container) }}
   {{- end }}
+  {{- $portSpec := index $containerPorts $servicePort.port }}
+  {{- $protocol := "TCP" }}
+  {{- if kindIs "map" $portSpec }}
+    {{- $protocol = default "TCP" $portSpec.protocol }}
+  {{- end }}
+  {{- $_ := set $servicePort "protocol" $protocol }}
 {{- end }}
 apiVersion: v1
 kind: Service
@@ -69,5 +75,5 @@ spec:
     - name: {{ $servicePort.port }}
       port: {{ $servicePort.expose }}
       targetPort: {{ $servicePort.port }}
-      protocol: TCP
+      protocol: {{ $servicePort.protocol }}
     {{- end }}

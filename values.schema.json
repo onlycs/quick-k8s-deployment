@@ -117,6 +117,21 @@
     }
   },
   "definitions": {
+    "containerPort": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1, "maximum": 65535 },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["port"],
+          "properties": {
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "protocol": { "enum": ["TCP", "UDP"], "default": "TCP", "description": "Also used by any Service port that exposes this port." },
+            "hostPort": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Bind this port on the node. Requires a non-empty nodeSelector." }
+          }
+        }
+      ]
+    },
     "dnsLabel": {
       "type": "string",
       "minLength": 1,
@@ -372,9 +387,9 @@
         "ports": {
           "type": "object",
           "default": {},
-          "description": "Map of named TCP ports to container port numbers.",
+          "description": "Map of named ports. A bare number is a TCP port; an object sets protocol and an optional hostPort.",
           "propertyNames": { "$ref": "#/definitions/dnsLabel" },
-          "additionalProperties": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          "additionalProperties": { "$ref": "#/definitions/containerPort" }
         },
         "probes": { "$ref": "#/definitions/probes" },
         "env": { "type": "array", "default": [], "items": { "$ref": "#/definitions/environment" } },

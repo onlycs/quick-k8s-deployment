@@ -63,10 +63,14 @@ failureThreshold: {{ dig "failureThreshold" 5 $probe }}
   {{- end }}
   {{- with $container.ports }}
   ports:
-    {{- range $portName, $portNumber := . }}
+    {{- range $portName, $portSpec := . }}
+    {{- $spec := ternary $portSpec (dict "port" $portSpec) (kindIs "map" $portSpec) }}
     - name: {{ $portName }}
-      containerPort: {{ $portNumber }}
-      protocol: TCP
+      containerPort: {{ $spec.port }}
+      protocol: {{ default "TCP" $spec.protocol }}
+      {{- with $spec.hostPort }}
+      hostPort: {{ . }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- if and (not (default false $container.init)) $container.probes (not (hasKey $container.probes "enabled")) }}
