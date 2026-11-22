@@ -1,3 +1,4 @@
+{{- if .Values.service }}
 {{- $service := .Values.service }}
 {{- $serviceName := default .Values.metadata.name (get $service "name") }}
 {{- $regularContainers := list }}
@@ -77,3 +78,4 @@ spec:
       targetPort: {{ $servicePort.port }}
       protocol: {{ $servicePort.protocol }}
     {{- end }}
+{{- end }}

@@ -1,4 +1,7 @@
 {{- if .Values.ingress }}
+{{- if not .Values.service }}
+{{- fail "ingress requires service to be set" }}
+{{- end }}
 {{- $service := .Values.service }}
 {{- $serviceName := default .Values.metadata.name (get $service "name") }}
 {{- $requestedPort := default "" .Values.ingress.port }}

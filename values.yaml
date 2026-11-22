@@ -9,8 +9,6 @@ persistence: {}
 # Each container can set imagePullPolicy: Always, IfNotPresent (default), or Never.
 containers: {}
 
-service: {}
-
 scaling:
   replicas: 1
   strategy: Recreate
