@@ -59,7 +59,7 @@ spec:
       automountServiceAccountToken: false
       {{- end }}
       {{- with .Values.enableServiceLinks }}
-      serviceAccountName: {{ . }}
+      enableServiceLinks: {{ . }}
       {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
