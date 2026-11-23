@@ -50,7 +50,14 @@ spec:
       labels:
         {{- include "homelab-app.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.serviceAccount }}
+      {{- with .name }}
+      serviceAccountName: {{ . }}
+      {{- end }}
+      automountServiceAccountToken: {{ default false .automount }}
+      {{- else }}
       automountServiceAccountToken: false
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- range . }}

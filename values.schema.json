@@ -74,9 +74,20 @@
       "description": "Optional Ingress. Omit this object to expose the app only through its Service.",
       "required": ["host"],
       "properties": {
-        "host": { "type": "string", "minLength": 1, "description": "Ingress hostname." },
-        "port": { "$ref": "#/definitions/dnsLabel", "description": "Service port name used by this Ingress. Required when the selected Service has multiple ports." },
-        "annotations": { "$ref": "#/definitions/stringMap", "default": {}, "description": "Additional annotations applied to the Ingress." }
+        "host": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Ingress hostname."
+        },
+        "port": {
+          "$ref": "#/definitions/dnsLabel",
+          "description": "Service port name used by this Ingress. Required when the selected Service has multiple ports."
+        },
+        "annotations": {
+          "$ref": "#/definitions/stringMap",
+          "default": {},
+          "description": "Additional annotations applied to the Ingress."
+        }
       }
     },
     "scaling": {
@@ -84,8 +95,18 @@
       "additionalProperties": false,
       "default": { "replicas": 1, "strategy": "Recreate" },
       "properties": {
-        "replicas": { "type": "integer", "minimum": 0, "default": 1, "description": "Deployment replica count." },
-        "strategy": { "type": "string", "enum": ["Recreate", "RollingUpdate"], "default": "Recreate", "description": "Deployment update strategy." }
+        "replicas": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1,
+          "description": "Deployment replica count."
+        },
+        "strategy": {
+          "type": "string",
+          "enum": ["Recreate", "RollingUpdate"],
+          "default": "Recreate",
+          "description": "Deployment update strategy."
+        }
       }
     },
     "nodeSelector": {
@@ -99,7 +120,11 @@
       "description": "Optional Kubernetes tolerations.",
       "items": { "$ref": "#/definitions/toleration" }
     },
-    "runtimeClassName": { "type": "string", "default": "", "description": "Optional RuntimeClass, such as nvidia." },
+    "runtimeClassName": {
+      "type": "string",
+      "default": "",
+      "description": "Optional RuntimeClass, such as nvidia."
+    },
     "imagePullSecrets": {
       "type": "array",
       "default": [],
@@ -118,9 +143,30 @@
       "maximum": 100,
       "default": 10,
       "description": "Argo CD sync wave applied to resources rendered from app.yaml. Sibling manifests without a wave apply first at wave 0."
-    }
+    },
+    "serviceAccount": { "$ref": "#/definitions/serviceAccount" }
   },
   "definitions": {
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "description": "Optional existing ServiceAccount for the Pod. Omit to run as the namespace's default ServiceAccount with no API token mounted.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 253,
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+          "description": "Name of an existing ServiceAccount in the application's namespace."
+        },
+        "automount": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mount the ServiceAccount API token into the Pod. Required for the Pod to call the Kubernetes API."
+        }
+      }
+    },
     "containerPort": {
       "oneOf": [
         { "type": "integer", "minimum": 1, "maximum": 65535 },
@@ -130,8 +176,17 @@
           "required": ["port"],
           "properties": {
             "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-            "protocol": { "enum": ["TCP", "UDP"], "default": "TCP", "description": "Also used by any Service port that exposes this port." },
-            "hostPort": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Bind this port on the node. Requires a non-empty nodeSelector." }
+            "protocol": {
+              "enum": ["TCP", "UDP"],
+              "default": "TCP",
+              "description": "Also used by any Service port that exposes this port."
+            },
+            "hostPort": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Bind this port on the node. Requires a non-empty nodeSelector."
+            }
           }
         }
       ]
@@ -181,8 +236,16 @@
           "additionalProperties": false,
           "required": ["mountPath", "subPath"],
           "properties": {
-            "mountPath": { "type": "string", "pattern": "^/", "description": "Absolute path at which to mount the volume." },
-            "subPath": { "type": "string", "minLength": 1, "description": "Relative path within the volume to mount." }
+            "mountPath": {
+              "type": "string",
+              "pattern": "^/",
+              "description": "Absolute path at which to mount the volume."
+            },
+            "subPath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Relative path within the volume to mount."
+            }
           }
         }
       ]
@@ -202,9 +265,22 @@
       "additionalProperties": false,
       "required": ["port", "expose"],
       "properties": {
-        "container": { "type": "string", "minLength": 1, "description": "Name of the regular container providing this Service port. Optional when the app has exactly one regular container." },
-        "port": { "type": "string", "minLength": 1, "description": "Name of a port declared by the selected container." },
-        "expose": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Port exposed by the Kubernetes Service." }
+        "container": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the regular container providing this Service port. Optional when the app has exactly one regular container."
+        },
+        "port": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of a port declared by the selected container."
+        },
+        "expose": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port exposed by the Kubernetes Service."
+        }
       }
     },
     "service": {
@@ -214,25 +290,25 @@
           "additionalProperties": false,
           "required": ["port", "expose"],
           "properties": {
-            "name": { "$ref": "#/definitions/dnsLabel", "description": "Kubernetes Service name. Defaults to metadata.name." },
-            "container": { "type": "string", "minLength": 1, "description": "Name of the regular container providing this Service. Optional when the app has exactly one regular container." },
-            "port": { "type": "string", "minLength": 1, "description": "Name of a port declared by the selected container." },
-            "expose": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Port exposed by the Kubernetes Service." }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["ports"],
-          "properties": {
-            "name": { "$ref": "#/definitions/dnsLabel", "description": "Kubernetes Service name. Defaults to metadata.name." },
-            "container": { "type": "string", "minLength": 1, "description": "Name of the regular container providing every port in this Service. Optional when the app has exactly one regular container." },
-            "ports": {
-              "type": "object",
-              "minProperties": 1,
-              "description": "Map of named container ports to ports exposed by the Kubernetes Service.",
-              "propertyNames": { "$ref": "#/definitions/dnsLabel" },
-              "additionalProperties": { "type": "integer", "minimum": 1, "maximum": 65535 }
+            "name": {
+              "$ref": "#/definitions/dnsLabel",
+              "description": "Kubernetes Service name. Defaults to metadata.name."
+            },
+            "container": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of the regular container providing this Service. Optional when the app has exactly one regular container."
+            },
+            "port": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of a port declared by the selected container."
+            },
+            "expose": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Port exposed by the Kubernetes Service."
             }
           }
         },
@@ -241,7 +317,37 @@
           "additionalProperties": false,
           "required": ["ports"],
           "properties": {
-            "name": { "$ref": "#/definitions/dnsLabel", "description": "Kubernetes Service name. Defaults to metadata.name." },
+            "name": {
+              "$ref": "#/definitions/dnsLabel",
+              "description": "Kubernetes Service name. Defaults to metadata.name."
+            },
+            "container": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of the regular container providing every port in this Service. Optional when the app has exactly one regular container."
+            },
+            "ports": {
+              "type": "object",
+              "minProperties": 1,
+              "description": "Map of named container ports to ports exposed by the Kubernetes Service.",
+              "propertyNames": { "$ref": "#/definitions/dnsLabel" },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ports"],
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/dnsLabel",
+              "description": "Kubernetes Service name. Defaults to metadata.name."
+            },
             "ports": {
               "type": "array",
               "minItems": 1,
@@ -263,13 +369,26 @@
       "additionalProperties": false,
       "required": ["http", "path"],
       "properties": {
-        "http": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "HTTP probe port." },
+        "http": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "HTTP probe port."
+        },
         "path": { "type": "string", "pattern": "^/" },
-        "initialDelaySeconds": { "$ref": "#/definitions/probeTiming/initialDelaySeconds" },
-        "timeoutSeconds": { "$ref": "#/definitions/probeTiming/timeoutSeconds" },
+        "initialDelaySeconds": {
+          "$ref": "#/definitions/probeTiming/initialDelaySeconds"
+        },
+        "timeoutSeconds": {
+          "$ref": "#/definitions/probeTiming/timeoutSeconds"
+        },
         "periodSeconds": { "$ref": "#/definitions/probeTiming/periodSeconds" },
-        "successThreshold": { "$ref": "#/definitions/probeTiming/successThreshold" },
-        "failureThreshold": { "$ref": "#/definitions/probeTiming/failureThreshold" }
+        "successThreshold": {
+          "$ref": "#/definitions/probeTiming/successThreshold"
+        },
+        "failureThreshold": {
+          "$ref": "#/definitions/probeTiming/failureThreshold"
+        }
       }
     },
     "grpcProbes": {
@@ -277,12 +396,25 @@
       "additionalProperties": false,
       "required": ["grpc"],
       "properties": {
-        "grpc": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "gRPC probe port." },
-        "initialDelaySeconds": { "$ref": "#/definitions/probeTiming/initialDelaySeconds" },
-        "timeoutSeconds": { "$ref": "#/definitions/probeTiming/timeoutSeconds" },
+        "grpc": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "gRPC probe port."
+        },
+        "initialDelaySeconds": {
+          "$ref": "#/definitions/probeTiming/initialDelaySeconds"
+        },
+        "timeoutSeconds": {
+          "$ref": "#/definitions/probeTiming/timeoutSeconds"
+        },
         "periodSeconds": { "$ref": "#/definitions/probeTiming/periodSeconds" },
-        "successThreshold": { "$ref": "#/definitions/probeTiming/successThreshold" },
-        "failureThreshold": { "$ref": "#/definitions/probeTiming/failureThreshold" }
+        "successThreshold": {
+          "$ref": "#/definitions/probeTiming/successThreshold"
+        },
+        "failureThreshold": {
+          "$ref": "#/definitions/probeTiming/failureThreshold"
+        }
       }
     },
     "execProbes": {
@@ -290,12 +422,25 @@
       "additionalProperties": false,
       "required": ["exec"],
       "properties": {
-        "exec": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Command executed by the probe." },
-        "initialDelaySeconds": { "$ref": "#/definitions/probeTiming/initialDelaySeconds" },
-        "timeoutSeconds": { "$ref": "#/definitions/probeTiming/timeoutSeconds" },
+        "exec": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Command executed by the probe."
+        },
+        "initialDelaySeconds": {
+          "$ref": "#/definitions/probeTiming/initialDelaySeconds"
+        },
+        "timeoutSeconds": {
+          "$ref": "#/definitions/probeTiming/timeoutSeconds"
+        },
         "periodSeconds": { "$ref": "#/definitions/probeTiming/periodSeconds" },
-        "successThreshold": { "$ref": "#/definitions/probeTiming/successThreshold" },
-        "failureThreshold": { "$ref": "#/definitions/probeTiming/failureThreshold" }
+        "successThreshold": {
+          "$ref": "#/definitions/probeTiming/successThreshold"
+        },
+        "failureThreshold": {
+          "$ref": "#/definitions/probeTiming/failureThreshold"
+        }
       }
     },
     "tcpProbes": {
@@ -303,19 +448,37 @@
       "additionalProperties": false,
       "required": ["tcp"],
       "properties": {
-        "tcp": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "TCP probe port." },
-        "initialDelaySeconds": { "$ref": "#/definitions/probeTiming/initialDelaySeconds" },
-        "timeoutSeconds": { "$ref": "#/definitions/probeTiming/timeoutSeconds" },
+        "tcp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "TCP probe port."
+        },
+        "initialDelaySeconds": {
+          "$ref": "#/definitions/probeTiming/initialDelaySeconds"
+        },
+        "timeoutSeconds": {
+          "$ref": "#/definitions/probeTiming/timeoutSeconds"
+        },
         "periodSeconds": { "$ref": "#/definitions/probeTiming/periodSeconds" },
-        "successThreshold": { "$ref": "#/definitions/probeTiming/successThreshold" },
-        "failureThreshold": { "$ref": "#/definitions/probeTiming/failureThreshold" }
+        "successThreshold": {
+          "$ref": "#/definitions/probeTiming/successThreshold"
+        },
+        "failureThreshold": {
+          "$ref": "#/definitions/probeTiming/failureThreshold"
+        }
       }
     },
     "probeTiming": {
       "initialDelaySeconds": { "type": "integer", "minimum": 0, "default": 20 },
       "timeoutSeconds": { "type": "integer", "minimum": 1, "default": 5 },
       "periodSeconds": { "type": "integer", "minimum": 1, "default": 5 },
-      "successThreshold": { "type": "integer", "const": 1, "default": 1, "description": "Must be 1 because the same probe is used for startup and liveness." },
+      "successThreshold": {
+        "type": "integer",
+        "const": 1,
+        "default": 1,
+        "description": "Must be 1 because the same probe is used for startup and liveness."
+      },
       "failureThreshold": { "type": "integer", "minimum": 1, "default": 5 }
     },
     "probes": {
@@ -344,9 +507,21 @@
           "additionalProperties": false,
           "required": ["name", "secret"],
           "properties": {
-            "name": { "type": "string", "minLength": 1, "description": "Environment variable name." },
-            "secret": { "type": "string", "minLength": 1, "description": "Kubernetes Secret name." },
-            "key": { "type": "string", "minLength": 1, "description": "Key within the Secret. Defaults to name." }
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Environment variable name."
+            },
+            "secret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Kubernetes Secret name."
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Key within the Secret. Defaults to name."
+            }
           }
         },
         {
@@ -354,9 +529,21 @@
           "additionalProperties": false,
           "required": ["name", "configMap"],
           "properties": {
-            "name": { "type": "string", "minLength": 1, "description": "Environment variable name." },
-            "configMap": { "type": "string", "minLength": 1, "description": "Kubernetes ConfigMap name." },
-            "key": { "type": "string", "minLength": 1, "description": "Key within the ConfigMap. Defaults to name." }
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Environment variable name."
+            },
+            "configMap": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Kubernetes ConfigMap name."
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Key within the ConfigMap. Defaults to name."
+            }
           }
         },
         {
@@ -385,9 +572,23 @@
       "required": ["image"],
       "properties": {
         "image": { "type": "string", "minLength": 1 },
-        "imagePullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"], "default": "IfNotPresent", "description": "Container image pull policy. Defaults to IfNotPresent when omitted." },
-        "init": { "type": "boolean", "default": false, "description": "Render this as an init container instead of a regular container." },
-        "args": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Arguments passed to the container. Overrides the image CMD while keeping its ENTRYPOINT." },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "default": "IfNotPresent",
+          "description": "Container image pull policy. Defaults to IfNotPresent when omitted."
+        },
+        "init": {
+          "type": "boolean",
+          "default": false,
+          "description": "Render this as an init container instead of a regular container."
+        },
+        "args": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Arguments passed to the container. Overrides the image CMD while keeping its ENTRYPOINT."
+        },
         "ports": {
           "type": "object",
           "default": {},
@@ -396,7 +597,11 @@
           "additionalProperties": { "$ref": "#/definitions/containerPort" }
         },
         "probes": { "$ref": "#/definitions/probes" },
-        "env": { "type": "array", "default": [], "items": { "$ref": "#/definitions/environment" } },
+        "env": {
+          "type": "array",
+          "default": [],
+          "items": { "$ref": "#/definitions/environment" }
+        },
         "mounts": {
           "type": "object",
           "default": {},
@@ -411,7 +616,20 @@
           "description": "Raw Kubernetes Container fields appended to the rendered container. Use for uncommon fields such as securityContext, workingDir, command, lifecycle, stdin, or tty.",
           "propertyNames": {
             "not": {
-              "enum": ["name", "image", "imagePullPolicy", "args", "ports", "startupProbe", "readinessProbe", "livenessProbe", "env", "envFrom", "volumeMounts", "resources"]
+              "enum": [
+                "name",
+                "image",
+                "imagePullPolicy",
+                "args",
+                "ports",
+                "startupProbe",
+                "readinessProbe",
+                "livenessProbe",
+                "env",
+                "envFrom",
+                "volumeMounts",
+                "resources"
+              ]
             }
           },
           "additionalProperties": true
@@ -435,10 +653,29 @@
           "additionalProperties": false,
           "required": ["pvc"],
           "properties": {
-            "pvc": { "type": "string", "minLength": 1, "description": "Name of a pre-existing PersistentVolumeClaim." },
-            "path": { "type": "string", "maxLength": 0, "default": "", "description": "Leave empty when referencing a pre-existing claim." },
-            "size": { "type": "string", "maxLength": 0, "default": "", "description": "Leave empty when referencing a pre-existing claim." },
-            "mode": { "type": "string", "const": "", "default": "", "description": "Leave empty when referencing a pre-existing claim." }
+            "pvc": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of a pre-existing PersistentVolumeClaim."
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 0,
+              "default": "",
+              "description": "Leave empty when referencing a pre-existing claim."
+            },
+            "size": {
+              "type": "string",
+              "maxLength": 0,
+              "default": "",
+              "description": "Leave empty when referencing a pre-existing claim."
+            },
+            "mode": {
+              "type": "string",
+              "const": "",
+              "default": "",
+              "description": "Leave empty when referencing a pre-existing claim."
+            }
           }
         },
         {
@@ -446,10 +683,31 @@
           "additionalProperties": false,
           "required": ["pvc", "path", "size"],
           "properties": {
-            "pvc": { "type": "string", "minLength": 1, "description": "Name of the PersistentVolumeClaim to create and mount." },
-            "path": { "type": "string", "minLength": 1, "description": "Value of the nfs.io/storage-path PVC annotation." },
-            "size": { "type": "string", "minLength": 1, "description": "PVC storage request, such as 10Gi." },
-            "mode": { "type": "string", "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"], "default": "ReadWriteOnce" }
+            "pvc": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of the PersistentVolumeClaim to create and mount."
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Value of the nfs.io/storage-path PVC annotation."
+            },
+            "size": {
+              "type": "string",
+              "minLength": 1,
+              "description": "PVC storage request, such as 10Gi."
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "ReadWriteOnce",
+                "ReadOnlyMany",
+                "ReadWriteMany",
+                "ReadWriteOncePod"
+              ],
+              "default": "ReadWriteOnce"
+            }
           }
         },
         {
@@ -464,7 +722,15 @@
             },
             "type": {
               "type": "string",
-              "enum": ["DirectoryOrCreate", "Directory", "FileOrCreate", "File", "Socket", "CharDevice", "BlockDevice"],
+              "enum": [
+                "DirectoryOrCreate",
+                "Directory",
+                "FileOrCreate",
+                "File",
+                "Socket",
+                "CharDevice",
+                "BlockDevice"
+              ],
               "default": "DirectoryOrCreate",
               "description": "Kubernetes hostPath type check; defaults to DirectoryOrCreate."
             }
@@ -497,7 +763,10 @@
         "key": { "type": "string" },
         "operator": { "type": "string", "enum": ["Exists", "Equal"] },
         "value": { "type": "string" },
-        "effect": { "type": "string", "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"] },
+        "effect": {
+          "type": "string",
+          "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"]
+        },
         "tolerationSeconds": { "type": "integer", "minimum": 0 }
       }
     }
