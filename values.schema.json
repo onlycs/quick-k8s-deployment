@@ -29,6 +29,51 @@
     {
       "if": { "required": ["ingress"] },
       "then": { "required": ["service"] }
+    },
+    {
+      "$comment": "A surge pod can't schedule while the old pod holds the hostPort, so RollingUpdate must set maxSurge to 0.",
+      "if": {
+        "required": ["containers"],
+        "properties": {
+          "containers": {
+            "not": {
+              "additionalProperties": {
+                "not": {
+                  "required": ["ports"],
+                  "properties": {
+                    "ports": {
+                      "not": {
+                        "additionalProperties": {
+                          "not": { "type": "object", "required": ["hostPort"] }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "scaling": {
+            "anyOf": [
+              { "not": { "required": ["strategy"] } },
+              { "properties": { "strategy": { "const": "Recreate" } } },
+              {
+                "required": ["rollingUpdate"],
+                "properties": {
+                  "rollingUpdate": {
+                    "required": ["maxSurge"],
+                    "properties": { "maxSurge": { "enum": [0, "0%"] } }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
     }
   ],
   "properties": {
@@ -106,7 +151,35 @@
           "enum": ["Recreate", "RollingUpdate"],
           "default": "Recreate",
           "description": "Deployment update strategy."
+        },
+        "rollingUpdate": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "description": "RollingUpdate tuning. Only valid with strategy RollingUpdate. Omitted fields use the Kubernetes defaults of 25%.",
+          "properties": {
+            "maxSurge": {
+              "$ref": "#/definitions/intOrPercent",
+              "description": "Pods allowed above the replica count during a rollout. Must be 0 when a container sets hostPort."
+            },
+            "maxUnavailable": {
+              "$ref": "#/definitions/intOrPercent",
+              "description": "Pods allowed to be unavailable during a rollout."
+            }
+          },
+          "not": {
+            "required": ["maxSurge", "maxUnavailable"],
+            "properties": {
+              "maxSurge": { "enum": [0, "0%"] },
+              "maxUnavailable": { "enum": [0, "0%"] }
+            }
+          }
         }
+      },
+      "if": { "required": ["rollingUpdate"] },
+      "then": {
+        "required": ["strategy"],
+        "properties": { "strategy": { "const": "RollingUpdate" } }
       }
     },
     "nodeSelector": {
@@ -189,6 +262,12 @@
             }
           }
         }
+      ]
+    },
+    "intOrPercent": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "string", "pattern": "^(100|[1-9]?[0-9])%$" }
       ]
     },
     "dnsLabel": {

@@ -42,6 +42,10 @@ spec:
   replicas: {{ .Values.scaling.replicas }}
   strategy:
     type: {{ .Values.scaling.strategy }}
+    {{- if and (eq .Values.scaling.strategy "RollingUpdate") .Values.scaling.rollingUpdate }}
+    rollingUpdate:
+      {{- toYaml .Values.scaling.rollingUpdate | nindent 6 }}
+    {{- end }}
   selector:
     matchLabels:
       {{- include "homelab-app.selectorLabels" . | nindent 6 }}
