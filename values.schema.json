@@ -144,8 +144,7 @@
       "default": 10,
       "description": "Argo CD sync wave applied to resources rendered from app.yaml. Sibling manifests without a wave apply first at wave 0."
     },
-    "serviceAccount": { "$ref": "#/definitions/serviceAccount" },
-    "enableServiceLinks": { "type": "boolean" }
+    "serviceAccount": { "$ref": "#/definitions/serviceAccount" }
   },
   "definitions": {
     "serviceAccount": {
